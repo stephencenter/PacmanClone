@@ -1,16 +1,37 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Pacman
 {
-    /// <summary>
-    /// This is the main type for your game.
-    /// </summary>
     public class Pacman : Game
     {
-        GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch;
+        private readonly GraphicsDeviceManager graphics;
+        private SpriteBatch spriteBatch;
+
+        public int pos_x = 0;
+        public int pos_y = 0;
+        public int delta_move = 2;
+
+        private Texture2D p_sprite;
+
+        public enum Button
+        {
+            move_up,
+            move_down,
+            move_left,
+            move_right
+        } 
+
+        public static Dictionary<Button, List<Keys>> control_map = new Dictionary<Button, List<Keys>>()
+        {
+            { Button.move_up, new List<Keys>() { Keys.W, Keys.Up } },
+            { Button.move_down, new List<Keys>() { Keys.S, Keys.Down } },
+            { Button.move_left, new List<Keys>() { Keys.A, Keys.Left } },
+            { Button.move_right, new List<Keys>() { Keys.D, Keys.Right } }
+        };
 
         public Pacman()
         {
@@ -18,12 +39,6 @@ namespace Pacman
             Content.RootDirectory = "Content";
         }
 
-        /// <summary>
-        /// Allows the game to perform any initialization it needs to before starting to run.
-        /// This is where it can query for any required services and load any non-graphic
-        /// related content.  Calling base.Initialize will enumerate through any components
-        /// and initialize them as well.
-        /// </summary>
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
@@ -31,53 +46,85 @@ namespace Pacman
             base.Initialize();
         }
 
-        /// <summary>
-        /// LoadContent will be called once per game and is the place to load
-        /// all of your content.
-        /// </summary>
         protected override void LoadContent()
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
+            p_sprite = Content.Load<Texture2D>("player");
 
             // TODO: use this.Content to load your game content here
         }
 
-        /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// game-specific content.
-        /// </summary>
         protected override void UnloadContent()
         {
             // TODO: Unload any non ContentManager content here
         }
 
-        /// <summary>
-        /// Allows the game to run logic such as updating the world,
-        /// checking for collisions, gathering input, and playing audio.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
+           
+            if (CMethods.IsOnlyOneDirectionPressed())
+            {
+                if (CMethods.IsButtonPressed(Button.move_up))
+                {
+                    pos_y -= delta_move;
+                }
 
-            // TODO: Add your update logic here
+                if (CMethods.IsButtonPressed(Button.move_down))
+                {
+                    pos_y += delta_move;
+                }
+
+                if (CMethods.IsButtonPressed(Button.move_left))
+                {
+                    pos_x -= delta_move;
+                }
+
+                if (CMethods.IsButtonPressed(Button.move_right))
+                {
+                    pos_x += delta_move;
+                }
+            }
 
             base.Update(gameTime);
         }
-
-        /// <summary>
-        /// This is called when the game should draw itself.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // TODO: Add your drawing code here
+            spriteBatch.Begin();
+
+            spriteBatch.Draw(p_sprite, new Vector2(pos_x, pos_y), Color.White);
+
+            spriteBatch.End();
 
             base.Draw(gameTime);
+        }
+    }
+
+    public static class CMethods
+    {
+        // Check to see if a specific button is pressed
+        public static bool IsButtonPressed(Pacman.Button button)
+        {
+            return Pacman.control_map[button].Any(x => Keyboard.GetState().IsKeyDown(x));
+        }
+
+        // Make sure only one direction is active at a time
+        public static bool IsOnlyOneDirectionPressed()
+        {
+            List<Pacman.Button> directions = new List<Pacman.Button>()
+            {
+                Pacman.Button.move_up,
+                Pacman.Button.move_down,
+                Pacman.Button.move_left,
+                Pacman.Button.move_right
+            };
+
+            return directions.Count(x => IsButtonPressed(x)) == 1;
         }
     }
 }

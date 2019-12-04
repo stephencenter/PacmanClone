@@ -1,3 +1,5 @@
 .vs/
 Game Files/bin/
 Game Files/obj/
+/Game Files/Content/bin/
+/Game Files/Content/obj/
