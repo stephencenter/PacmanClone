@@ -10,13 +10,13 @@ namespace Pacman
     {
         private readonly GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
+        public const int player_size = 12;
+        public const int tile_size = 16;
+        public const int screen_width = 28;
+        public const int screen_height = 36;
+        public const float scaling_factor = 1.7f;
 
-        public int pos_x = 0;
-        public int pos_y = 0;
-        public int delta_move = 2;
-
-        private Texture2D p_sprite;
-
+        // List of valid actions, these can have multiple keys assigned to them
         public enum Button
         {
             move_up,
@@ -25,6 +25,7 @@ namespace Pacman
             move_right
         } 
 
+        // Dictionary that determines which keys correspond to which actions
         public static Dictionary<Button, List<Keys>> control_map = new Dictionary<Button, List<Keys>>()
         {
             { Button.move_up, new List<Keys>() { Keys.W, Keys.Up } },
@@ -33,6 +34,7 @@ namespace Pacman
             { Button.move_right, new List<Keys>() { Keys.D, Keys.Right } }
         };
 
+        // Constructor
         public Pacman()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -41,18 +43,18 @@ namespace Pacman
 
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
-
             base.Initialize();
+            graphics.PreferredBackBufferHeight = (int)(tile_size * screen_height * scaling_factor);
+            graphics.PreferredBackBufferWidth = (int)(tile_size * screen_width * scaling_factor);
+            graphics.ApplyChanges();
+            TileManager.CreateGameMap(Content);
         }
 
         protected override void LoadContent()
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            p_sprite = Content.Load<Texture2D>("player");
-
-            // TODO: use this.Content to load your game content here
+            EntityManager.AssignSprites(Content);
         }
 
         protected override void UnloadContent()
@@ -62,30 +64,9 @@ namespace Pacman
 
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
-           
-            if (CMethods.IsOnlyOneDirectionPressed())
+            foreach (Entity entity in EntityManager.GetEntityList())
             {
-                if (CMethods.IsButtonPressed(Button.move_up))
-                {
-                    pos_y -= delta_move;
-                }
-
-                if (CMethods.IsButtonPressed(Button.move_down))
-                {
-                    pos_y += delta_move;
-                }
-
-                if (CMethods.IsButtonPressed(Button.move_left))
-                {
-                    pos_x -= delta_move;
-                }
-
-                if (CMethods.IsButtonPressed(Button.move_right))
-                {
-                    pos_x += delta_move;
-                }
+                entity.Move();
             }
 
             base.Update(gameTime);
@@ -95,9 +76,17 @@ namespace Pacman
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            spriteBatch.Begin();
+            spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, Matrix.CreateScale(scaling_factor));
 
-            spriteBatch.Draw(p_sprite, new Vector2(pos_x, pos_y), Color.White);
+            foreach (Tile tile in TileManager.GetTileList())
+            {
+                spriteBatch.Draw(tile.Sprite, new Vector2(tile.PosX, tile.PosY), Color.White);
+            }
+
+            foreach (Entity entity in EntityManager.GetEntityList())
+            {
+                spriteBatch.Draw(entity.Sprite, new Vector2(entity.PosX, entity.PosY), Color.White);
+            }
 
             spriteBatch.End();
 
@@ -105,7 +94,7 @@ namespace Pacman
         }
     }
 
-    public static class CMethods
+    public static class Logic
     {
         // Check to see if a specific button is pressed
         public static bool IsButtonPressed(Pacman.Button button)
