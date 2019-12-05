@@ -10,16 +10,22 @@ namespace Pacman
 {
     public static class TileManager
     {
-        private static readonly List<Tile> TileList = new List<Tile>();
+        private static readonly List<Tile> tile_list = new List<Tile>();
+        private static readonly List<Item> item_list = new List<Item>();
 
         public static List<Tile> GetTileList()
         {
-            return TileList;
+            return tile_list;
+        }
+
+        public static List<Item> GetItemList()
+        {
+            return item_list;
         }
 
         public static Warp FindMatchingWarp(Warp warp)
         {
-            return TileList.First(x => x is Warp && (x as Warp).Symbol == warp.Symbol && x != warp) as Warp;
+            return tile_list.First(x => x is Warp && (x as Warp).Symbol == warp.Symbol && x != warp) as Warp;
         }
 
         public static void CreateGameMap(ContentManager content)
@@ -39,22 +45,34 @@ namespace Pacman
                 {
                     if (symbol == 'X')
                     {
-                        TileList.Add(new Tile(x, y, "non_traversable", false, content));
+                        tile_list.Add(new Tile(x, y, "Sprites/nontraversable_blue", false, content));
+                    }
+
+                    else if (symbol == '_')
+                    {
+                        tile_list.Add(new Tile(x, y, "Sprites/traversable", true, content));
                     }
 
                     else if (symbol == '.')
                     {
-                        TileList.Add(new Tile(x, y, "traversable_grey", true, content));
+                        tile_list.Add(new Tile(x, y, "Sprites/traversable", true, content));
+                        item_list.Add(new SmallPellet(x, y, "Sprites/small_pellet", content));
+                    }
+
+                    else if (symbol == '*')
+                    {
+                        tile_list.Add(new Tile(x, y, "Sprites/traversable", true, content));
+                        item_list.Add(new PowerPellet(x, y, "Sprites/power_pellet", content));
                     }
 
                     else if (new List<char>() { 'A', 'B', 'C', 'D', 'E', 'F' }.Contains(symbol))
                     {
-                        TileList.Add(new Warp(x, y, symbol, "traversable_black", true, content));
+                        tile_list.Add(new Warp(x, y, symbol, "Sprites/traversable_black", true, content));
                     }
 
                     else
                     {
-                        TileList.Add(new Tile(x, y, "traversable_black", true, content));
+                        tile_list.Add(new Tile(x, y, "Sprites/nontraversable_black", false, content));
                     }
 
                     x += Pacman.tile_size;
@@ -89,6 +107,43 @@ namespace Pacman
         public Warp(int pos_x, int pos_y, char symbol, string sprite, bool traversable, ContentManager content) : base(pos_x, pos_y, sprite, traversable, content)
         {
             Symbol = symbol;
+        }
+    }
+
+    public abstract class Item
+    {
+        public int PosX;
+        public int PosY;
+        public Texture2D Sprite;
+
+        public Item(int pos_x, int pos_y, string sprite, ContentManager content)
+        {
+            PosX = pos_x;
+            PosY = pos_y;
+            Sprite = content.Load<Texture2D>(sprite);
+        }
+
+        public abstract void UponEating();
+    }
+
+    public class SmallPellet : Item
+    {
+        public SmallPellet(int pos_x, int pos_y, string sprite, ContentManager content) : base(pos_x, pos_y, sprite, content) { }
+
+        public override void UponEating()
+        {
+            TileManager.GetItemList().Remove(this);
+            Pacman.CollectedPellets++;
+        }
+    }
+
+    public class PowerPellet : Item
+    {
+        public PowerPellet(int pos_x, int pos_y, string sprite, ContentManager content) : base(pos_x, pos_y, sprite, content) { }
+
+        public override void UponEating()
+        {
+
         }
     }
 }

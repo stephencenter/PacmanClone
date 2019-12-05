@@ -17,7 +17,8 @@ namespace Pacman
         public const int tile_size = 8;
         public const int screen_width = 28;
         public const int screen_height = 36;
-        public static float scaling_factor = 2f;
+        public static float scaling_factor = 3.25f;
+        public static int CollectedPellets = 0;
 
         // List of valid actions, these can have multiple keys assigned to them
         public enum Button
@@ -74,7 +75,7 @@ namespace Pacman
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            EntityManager.AssignSprites(Content);
+            EntityManager.CreateEntities(Content);
         }
 
         protected override void UnloadContent()
@@ -107,15 +108,25 @@ namespace Pacman
                 spriteBatch.Draw(tile.Sprite, new Vector2(tile.PosX, tile.PosY), Color.White);
             }
 
+            // Draw the items
+            foreach (Item item in TileManager.GetItemList())
+            {
+                spriteBatch.Draw(item.Sprite, new Vector2(item.PosX, item.PosY), Color.White);
+            }
+
             // Draw the player and ghosts
             foreach (Entity entity in EntityManager.GetEntityList())
             {
                 spriteBatch.Draw(entity.Sprite, new Vector2(entity.PosX, entity.PosY), Color.White);
-                if (entity is Ghost ghost)
-                {
-                    spriteBatch.Draw(ghost.TargetSprite, new Vector2(ghost.CurrentTarget.X, ghost.CurrentTarget.Y), Color.White);
-                }
+                //if (entity is Ghost ghost)
+                //{
+                //    spriteBatch.Draw(ghost.TargetSprite, new Vector2(ghost.CurrentTarget.X, ghost.CurrentTarget.Y), Color.White);
+                //}
             }
+
+            // Draw the HUD
+            SpriteFont font = Content.Load<SpriteFont>("lucida");
+            spriteBatch.DrawString(font, $"Collected pellets: {CollectedPellets}", new Vector2(2, 2), Color.White, 0, new Vector2(0, 0), 0.125f, new SpriteEffects(), 0);
 
             spriteBatch.End();
             base.Draw(gameTime);

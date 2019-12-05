@@ -18,7 +18,7 @@
 /processor:FontDescriptionProcessor
 /processorParam:PremultiplyAlpha=True
 /processorParam:TextureFormat=Compressed
-/build:debug.spritefont
+/build:debug.spritefont;lucida.spritefont
 
 #begin Sprites/blinky.png
 /importer:TextureImporter
@@ -102,7 +102,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/non_traversable.png
+/build:Sprites/non_traversable.png;Sprites/nontraversable_blue.png
 
 #begin Sprites/pinky.png
 /importer:TextureImporter
@@ -140,6 +140,30 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/player.png
 
+#begin Sprites/power_pellet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/power_pellet.png
+
+#begin Sprites/small_pellet.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/small_pellet.png
+
 #begin Sprites/traversable_black.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -150,7 +174,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/traversable_black.png
+/build:Sprites/traversable_black.png;Sprites/nontraversable_black.png
 
 #begin Sprites/traversable_grey.png
 /importer:TextureImporter
@@ -162,5 +186,5 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/traversable_grey.png
+/build:Sprites/traversable_grey.png;Sprites/traversable.png
 
