@@ -1,10 +1,10 @@
-
-
-
+// These three lines
+// are where the HUD goes
+// do not remove them
  XXXXXXXXXXXXXXXXXXXXXXXXXXXX
  X............XX............X
  X.XXXX.XXXXX.XX.XXXXX.XXXX.X
- X.X  X.X   X.XX.X   X.X  X.X
+ X.XXXX.XXXXX.XX.XXXXX.XXXX.X
  X.XXXX.XXXXX.XX.XXXXX.XXXX.X
  X..........................X
  X.XXXX.XX.XXXXXXXX.XX.XXXX.X
@@ -32,4 +32,5 @@ A..........X      X..........A
  X.XXXXXXXXXX.XX.XXXXXXXXXX.X
  X..........................X
  XXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
+// These two lines
+// Are also for the HUD
