@@ -3,7 +3,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
 
 namespace Pacman
 {
@@ -11,19 +13,19 @@ namespace Pacman
     {
         private readonly GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
-        public const int entity_size = 23;
-        public const int tile_size = 24;
+        public const int entity_size = 8;
+        public const int tile_size = 8;
         public const int screen_width = 28;
         public const int screen_height = 36;
-        public static float scaling_factor = 1.0f;
+        public static float scaling_factor = 2f;
 
         // List of valid actions, these can have multiple keys assigned to them
         public enum Button
         {
-            move_up,
-            move_down,
-            move_left,
-            move_right
+            [Description("move up")] move_up,
+            [Description("move down")] move_down,
+            [Description("move left")] move_left,
+            [Description("move right")] move_right
         }
 
         // Dictionary that determines which keys correspond to which actions
@@ -37,10 +39,10 @@ namespace Pacman
 
         public enum Direction
         {
-            up,
-            down,
-            left,
-            right
+            [Description("up")] up,
+            [Description("down")] down,
+            [Description("left")] left,
+            [Description("right")]  right
         }
 
         public static Dictionary<Direction, Direction> OppositeDir = new Dictionary<Direction, Direction>()
@@ -97,21 +99,25 @@ namespace Pacman
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.Black);
-
             spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, Matrix.CreateScale(scaling_factor));
-
+            
+            // Draw the tiles
             foreach (Tile tile in TileManager.GetTileList())
             {
                 spriteBatch.Draw(tile.Sprite, new Vector2(tile.PosX, tile.PosY), Color.White);
             }
 
+            // Draw the player and ghosts
             foreach (Entity entity in EntityManager.GetEntityList())
             {
                 spriteBatch.Draw(entity.Sprite, new Vector2(entity.PosX, entity.PosY), Color.White);
+                if (entity is Ghost ghost)
+                {
+                    spriteBatch.Draw(ghost.TargetSprite, new Vector2(ghost.CurrentTarget.X, ghost.CurrentTarget.Y), Color.White);
+                }
             }
 
             spriteBatch.End();
-
             base.Draw(gameTime);
         }
     }
@@ -122,6 +128,25 @@ namespace Pacman
         public static bool IsButtonPressed(Pacman.Button button)
         {
             return Pacman.control_map[button].Any(x => Keyboard.GetState().IsKeyDown(x));
+        }
+
+        public static string EnumToString(this Enum value)
+        {
+            if (value == null)
+            {
+                return "none";
+            }
+
+            Type type = value.GetType();
+            string name = Enum.GetName(value.GetType(), value);
+
+            FieldInfo field = type.GetField(name);
+            if (field != null && Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) is DescriptionAttribute attr)
+            {
+                return attr.Description;
+            }
+
+            return "error";
         }
     }
 }

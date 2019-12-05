@@ -29,6 +29,10 @@ namespace Pacman
             pinky.Sprite = content.Load<Texture2D>("pinky");
             inky.Sprite = content.Load<Texture2D>("inky");
             clyde.Sprite = content.Load<Texture2D>("clyde");
+            blinky.TargetSprite = content.Load<Texture2D>("blinky_target");
+            pinky.TargetSprite = content.Load<Texture2D>("pinky_target");
+            inky.TargetSprite = content.Load<Texture2D>("inky_target");
+            clyde.TargetSprite = content.Load<Texture2D>("clyde_target");
 
             player.PosX = (int)(13.3*Pacman.tile_size);
             player.PosY = 26*Pacman.tile_size;
@@ -130,7 +134,7 @@ namespace Pacman
     {
         public override void Move()
         {
-            const int delta_move = 3;
+            const int delta_move = 1;
 
             // Get keyboard input to determine current and queued actions
             if (Logic.IsButtonPressed(Pacman.Button.move_up))
@@ -205,7 +209,7 @@ namespace Pacman
                 }
             }
 
-            else if (CurrentAction == Pacman.Button.move_down || (QueuedAction == Pacman.Button.move_down && !PredictCollision(0, delta_move)))
+            if (CurrentAction == Pacman.Button.move_down || (QueuedAction == Pacman.Button.move_down && !PredictCollision(0, delta_move)))
             {
                 if (!PredictCollision(0, delta_move))
                 {
@@ -224,7 +228,7 @@ namespace Pacman
                 }
             }
 
-            else if (CurrentAction == Pacman.Button.move_left || (QueuedAction == Pacman.Button.move_left && !PredictCollision(-delta_move, 0)))
+            if (CurrentAction == Pacman.Button.move_left || (QueuedAction == Pacman.Button.move_left && !PredictCollision(-delta_move, 0)))
             {
                 if (!PredictCollision(-delta_move, 0))
                 {
@@ -243,7 +247,7 @@ namespace Pacman
                 }
             }
 
-            else if (CurrentAction == Pacman.Button.move_right || (QueuedAction == Pacman.Button.move_right && !PredictCollision(delta_move, 0)))
+            if (CurrentAction == Pacman.Button.move_right || (QueuedAction == Pacman.Button.move_right && !PredictCollision(delta_move, 0)))
             {
                 if (!PredictCollision(delta_move, 0))
                 {
@@ -254,7 +258,6 @@ namespace Pacman
                         CurrentAction = Pacman.Button.move_right;
                         QueuedAction = null;
                     }
-
                 }
 
                 else
@@ -272,7 +275,9 @@ namespace Pacman
 
     public abstract class Ghost : Entity
     {
-        Pacman.Direction FacingDirection = Pacman.Direction.down;
+        public Pacman.Direction FacingDirection { get; set; }
+        public Vector2 CurrentTarget { get; set; }
+        public Texture2D TargetSprite { get; set; }
 
         public override void Move()
         {
@@ -281,14 +286,14 @@ namespace Pacman
             //    return;
             //}
 
-            Vector2 target = GetTarget();
+            CurrentTarget = UpdateTarget();
 
-            const int delta_move = 2;
+            const int delta_move = 1;
 
-            float dist_up = (float)Math.Sqrt(Math.Pow(PosX - target.X, 2) + Math.Pow(PosY - delta_move - target.Y, 2));
-            float dist_down = (float)Math.Sqrt(Math.Pow(PosX - target.X, 2) + Math.Pow(PosY + delta_move - target.Y, 2));
-            float dist_left = (float)Math.Sqrt(Math.Pow(PosX - delta_move - target.X, 2) + Math.Pow(PosY - target.Y, 2));
-            float dist_right = (float)Math.Sqrt(Math.Pow(PosX + delta_move - target.X, 2) + Math.Pow(PosY - target.Y, 2));
+            float dist_up = (float)Math.Sqrt(Math.Pow(PosX - CurrentTarget.X, 2) + Math.Pow(PosY - delta_move - CurrentTarget.Y, 2));
+            float dist_down = (float)Math.Sqrt(Math.Pow(PosX - CurrentTarget.X, 2) + Math.Pow(PosY + delta_move - CurrentTarget.Y, 2));
+            float dist_left = (float)Math.Sqrt(Math.Pow(PosX - delta_move - CurrentTarget.X, 2) + Math.Pow(PosY - CurrentTarget.Y, 2));
+            float dist_right = (float)Math.Sqrt(Math.Pow(PosX + delta_move - CurrentTarget.X, 2) + Math.Pow(PosY - CurrentTarget.Y, 2));
 
             Dictionary<Pacman.Direction, float> distances = new Dictionary<Pacman.Direction, float>() 
             {
@@ -364,12 +369,12 @@ namespace Pacman
             }
         }
 
-        public abstract Vector2 GetTarget();
+        public abstract Vector2 UpdateTarget();
     }
 
     public sealed class Blinky : Ghost
     {
-        public override Vector2 GetTarget()
+        public override Vector2 UpdateTarget()
         {
             return new Vector2(EntityManager.player.PosX, EntityManager.player.PosY);
         }
@@ -377,7 +382,7 @@ namespace Pacman
 
     public sealed class Pinky : Ghost
     {
-        public override Vector2 GetTarget()
+        public override Vector2 UpdateTarget()
         {
             return new Vector2(EntityManager.player.PosX, EntityManager.player.PosY);
         }
@@ -385,7 +390,7 @@ namespace Pacman
 
     public sealed class Inky : Ghost
     {
-        public override Vector2 GetTarget()
+        public override Vector2 UpdateTarget()
         {
             return new Vector2(EntityManager.player.PosX, EntityManager.player.PosY);
         }
@@ -393,7 +398,7 @@ namespace Pacman
 
     public sealed class Clyde : Ghost
     {
-        public override Vector2 GetTarget()
+        public override Vector2 UpdateTarget()
         {
             return new Vector2(EntityManager.player.PosX, EntityManager.player.PosY);
         }
