@@ -133,7 +133,7 @@ namespace Pacman
         public override void UponEating()
         {
             TileManager.GetItemList().Remove(this);
-            Pacman.CollectedPellets++;
+            Pacman.collected_pellets++;
         }
     }
 
@@ -143,7 +143,9 @@ namespace Pacman
 
         public override void UponEating()
         {
-
+            TileManager.GetItemList().Remove(this);
+            EntityManager.state_timer = 0;
+            EntityManager.ghost_state = EntityManager.GhostState.frightened;
         }
     }
 }

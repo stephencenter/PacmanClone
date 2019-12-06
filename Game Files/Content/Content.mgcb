@@ -13,13 +13,6 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin debug.spritefont
-/importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
-/processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
-/build:debug.spritefont;lucida.spritefont
-
 #begin Sprites/blinky.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -92,7 +85,7 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/inky_target.png
 
-#begin Sprites/non_traversable.png
+#begin Sprites/nontraversable_black.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -102,7 +95,19 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/non_traversable.png;Sprites/nontraversable_blue.png
+/build:Sprites/nontraversable_black.png
+
+#begin Sprites/nontraversable_blue.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Sprites/nontraversable_blue.png
 
 #begin Sprites/pinky.png
 /importer:TextureImporter
@@ -164,7 +169,7 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/small_pellet.png
 
-#begin Sprites/traversable_black.png
+#begin Sprites/traversable.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -174,17 +179,12 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/traversable_black.png;Sprites/nontraversable_black.png
+/build:Sprites/traversable.png
 
-#begin Sprites/traversable_grey.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
+#begin ui_font.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
 /processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Sprites/traversable_grey.png;Sprites/traversable.png
+/processorParam:TextureFormat=Compressed
+/build:ui_font.spritefont
 

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using Microsoft.Xna.Framework;
-using System.IO;
+using System.ComponentModel;
 
 namespace Pacman
 {
@@ -16,6 +16,22 @@ namespace Pacman
         public static Pinky pinky;
         public static Inky inky;
         public static Clyde clyde;
+
+        public static GhostState ghost_state;
+        public static float state_timer;
+        private static float previous_timer;
+
+        private static GhostState suspended_state;
+        private static float suspended_timer;
+
+        // List of possible AI states for the ghosts
+        public enum GhostState
+        {
+            [Description("scatter")] scatter,
+            [Description("chase")] chase,
+            [Description("frightened")] frightened
+            // Eaten is also technically an AI state, but it is handled per-ghost and not globally
+        }
 
         public static List<Entity> GetEntityList()
         {
@@ -41,7 +57,7 @@ namespace Pacman
             }
         }
 
-        public static List<Tile> GetCurrentTiles(int pos_x, int pos_y)
+        public static List<Tile> GetCurrentTiles(float pos_x, float pos_y)
         {
             Vector2 e_top_left = new Vector2(pos_x, pos_y);
             Vector2 e_bot_right = new Vector2(pos_x + Pacman.entity_size, pos_y + Pacman.entity_size);
@@ -97,6 +113,48 @@ namespace Pacman
 
             return new Vector2(entity.PosX + delta_x, entity.PosY + delta_y);
         }
+
+        public static void ManageGhostStates(GameTime game_time)
+        {
+            float current_time = (float)(game_time.TotalGameTime.TotalSeconds);
+            state_timer += current_time - previous_timer;
+            previous_timer = current_time;
+
+            if (ghost_state != GhostState.frightened)
+            {
+                suspended_timer = state_timer;
+            }
+                
+            if (ghost_state == GhostState.frightened && state_timer >= 8)
+            {
+                ghost_state = suspended_state;
+                state_timer = suspended_timer;
+            }
+
+            if (ghost_state == GhostState.scatter && state_timer >= 7)
+            {
+                foreach (Ghost ghost in GetEntityList().Where(x => x is Ghost))
+                {
+                    ghost.FacingDirection = Pacman.OppositeDir[ghost.FacingDirection];
+                }
+
+                ghost_state = GhostState.chase;
+                suspended_state = GhostState.chase;
+                state_timer = 0;
+            }
+
+            if (ghost_state == GhostState.chase && state_timer >= 20)
+            {
+                foreach (Ghost ghost in GetEntityList().Where(x => x is Ghost))
+                {
+                    ghost.FacingDirection = Pacman.OppositeDir[ghost.FacingDirection];
+                }
+
+                ghost_state = GhostState.scatter;
+                suspended_state = GhostState.scatter;
+                state_timer = 0;
+            }
+        }
     }
 
     public abstract class Entity
@@ -115,7 +173,7 @@ namespace Pacman
 
         public abstract void Move();
 
-        public bool PredictCollision(int x_delta, int y_delta)
+        public bool PredictCollision(float x_delta, float y_delta)
         {
             return EntityManager.GetCurrentTiles(PosX + x_delta, PosY + y_delta).Any(x => !x.Traversable);
         }
@@ -315,8 +373,8 @@ namespace Pacman
 
     public abstract class Ghost : Entity
     {
-        public Vector2 CurrentTarget { get; set; }
         public Texture2D TargetSprite { get; set; }
+        public Vector2 CurrentTarget { get; set; }
 
         public Ghost(Texture2D sprite, Vector2 home_point, Texture2D t_sprite) : base(sprite, home_point)
         {
@@ -326,7 +384,6 @@ namespace Pacman
         public override void Move()
         {
             CurrentTarget = UpdateTarget();
-
             const int delta_move = 1;
 
             float dist_up = (float)Math.Sqrt(Math.Pow(PosX - CurrentTarget.X, 2) + Math.Pow(PosY - delta_move - CurrentTarget.Y, 2));
@@ -411,6 +468,13 @@ namespace Pacman
     {
         public override Vector2 UpdateTarget()
         {
+            // Scatter state
+            if (EntityManager.ghost_state == EntityManager.GhostState.scatter)
+            {
+                return HomePoint;
+            }
+
+            // Chase state
             return new Vector2(EntityManager.player.PosX, EntityManager.player.PosY);
         }
 
@@ -421,6 +485,13 @@ namespace Pacman
     {
         public override Vector2 UpdateTarget()
         {
+            // Scatter state
+            if (EntityManager.ghost_state == EntityManager.GhostState.scatter)
+            {
+                return HomePoint;
+            }
+
+            // Chase state
             return EntityManager.FindPointInFrontOfEntity(EntityManager.player, 4);
         }
 
@@ -431,6 +502,13 @@ namespace Pacman
     {
         public override Vector2 UpdateTarget()
         {
+            // Scatter state
+            if (EntityManager.ghost_state == EntityManager.GhostState.scatter)
+            {
+                return HomePoint;
+            }
+
+            // Chase state
             Vector2 mid_point = EntityManager.FindPointInFrontOfEntity(EntityManager.player, 2);
             Vector2 blinky_point = new Vector2(EntityManager.blinky.PosX, EntityManager.blinky.PosY);
 
@@ -447,6 +525,13 @@ namespace Pacman
     {
         public override Vector2 UpdateTarget()
         {
+            // Scatter state
+            if (EntityManager.ghost_state == EntityManager.GhostState.scatter)
+            {
+                return HomePoint;
+            }
+
+            // Chase state
             Vector2 player_point = new Vector2(EntityManager.player.PosX, EntityManager.player.PosY);
             float current_distance = (float)Math.Sqrt(Math.Pow(PosY - player_point.Y, 2) + Math.Pow(PosX - player_point.X, 2));
 

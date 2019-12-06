@@ -18,7 +18,7 @@ namespace Pacman
         public const int screen_width = 28;
         public const int screen_height = 36;
         public static float scaling_factor = 3.25f;
-        public static int CollectedPellets = 0;
+        public static int collected_pellets = 0;
 
         // List of valid actions, these can have multiple keys assigned to them
         public enum Button
@@ -38,14 +38,16 @@ namespace Pacman
             { Button.move_right, new List<Keys>() { Keys.D, Keys.Right } }
         };
 
+        // List of valid directions the entities can face or move in
         public enum Direction
         {
             [Description("up")] up,
             [Description("down")] down,
             [Description("left")] left,
-            [Description("right")]  right
+            [Description("right")] right
         }
 
+        // Use this to get the opposite direction the entity is facing
         public static Dictionary<Direction, Direction> OppositeDir = new Dictionary<Direction, Direction>()
         {
             { Direction.up, Direction.down },
@@ -83,21 +85,23 @@ namespace Pacman
             // TODO: Unload any non ContentManager content here
         }
 
-        protected override void Update(GameTime gameTime)
+        protected override void Update(GameTime game_time)
         {
             float sf1 = (float)(graphics.PreferredBackBufferHeight) / (tile_size * screen_height);
             float sf2 = (float)(graphics.PreferredBackBufferWidth) / (tile_size * screen_width);
             scaling_factor = Math.Min(sf1, sf2);
+
+            EntityManager.ManageGhostStates(game_time);
 
             foreach (Entity entity in EntityManager.GetEntityList())
             {
                 entity.Move();
             }
 
-            base.Update(gameTime);
+            base.Update(game_time);
         }
         
-        protected override void Draw(GameTime gameTime)
+        protected override void Draw(GameTime game_time)
         {
             GraphicsDevice.Clear(Color.Black);
             spriteBatch.Begin(SpriteSortMode.Immediate, null, SamplerState.PointClamp, null, null, null, Matrix.CreateScale(scaling_factor));
@@ -118,18 +122,19 @@ namespace Pacman
             foreach (Entity entity in EntityManager.GetEntityList())
             {
                 spriteBatch.Draw(entity.Sprite, new Vector2(entity.PosX, entity.PosY), Color.White);
-                //if (entity is Ghost ghost)
-                //{
-                //    spriteBatch.Draw(ghost.TargetSprite, new Vector2(ghost.CurrentTarget.X, ghost.CurrentTarget.Y), Color.White);
-                //}
+                if (entity is Ghost ghost)
+                {
+                    spriteBatch.Draw(ghost.TargetSprite, new Vector2(ghost.CurrentTarget.X, ghost.CurrentTarget.Y), Color.White);
+                }
             }
 
             // Draw the HUD
-            SpriteFont font = Content.Load<SpriteFont>("lucida");
-            spriteBatch.DrawString(font, $"Collected pellets: {CollectedPellets}", new Vector2(2, 2), Color.White, 0, new Vector2(0, 0), 0.125f, new SpriteEffects(), 0);
+            SpriteFont font = Content.Load<SpriteFont>("ui_font");
+            spriteBatch.DrawString(font, $"Ghost State: {EntityManager.ghost_state.EnumToString()}", new Vector2(2, 2), Color.White);
+            spriteBatch.DrawString(font, $"State Timer: {EntityManager.state_timer}", new Vector2(2, 2 + tile_size), Color.White);
 
             spriteBatch.End();
-            base.Draw(gameTime);
+            base.Draw(game_time);
         }
     }
 
