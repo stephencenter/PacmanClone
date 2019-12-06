@@ -22,7 +22,6 @@ namespace Pacman
         public static GhostState ghost_state;
         public static float state_timer;
         private static float previous_timer;
-
         private static GhostState suspended_state;
         private static float suspended_timer;
 
@@ -202,6 +201,13 @@ namespace Pacman
                 ghost.Rested = false;
             }
         }
+
+        public static void ResetValues()
+        {
+            previous_timer = 0;
+            suspended_state = GhostState.scatter;
+            suspended_timer = 0;
+        }
     }
 
     public abstract class Entity : GameObject
@@ -260,8 +266,8 @@ namespace Pacman
         public void FixPosition()
         {
             // This fixes any problems that would have occured from changing move-speeds mid-game
-            int x_remainder = PosX % move_speed;
-            int y_remainder = PosY % move_speed;
+            int x_remainder = move_speed != 0 ? PosX % move_speed : 0;
+            int y_remainder = move_speed != 0 ? PosY % move_speed : 0;
 
             if (PredictCollision(x_remainder, 0))
             {
@@ -430,7 +436,8 @@ namespace Pacman
 
         public void EatThings()
         {
-            List<Item> to_be_eaten = Logic.FindOverlapsFromList(this, TileManager.GetItemList().Select(x => x as GameObject)).Select(x => x as Item).ToList();
+            var the_list = TileManager.GetItemList().Select(x => x as GameObject);
+            List<Item> to_be_eaten = Logic.FindOverlapsFromList(this, the_list).Select(x => x as Item).ToList();
 
             foreach (Item item in to_be_eaten)
             {
@@ -440,7 +447,8 @@ namespace Pacman
 
         public void EncounterGhost()
         {
-            List<Ghost> encountered_ghosts = Logic.FindOverlapsFromList(this, EntityManager.GetGhostList().Select(x => x as GameObject)).Select(x => x as Ghost).ToList();
+            var the_list = EntityManager.GetGhostList().Select(x => x as GameObject);
+            List<Ghost> encountered_ghosts = Logic.FindOverlapsFromList(this, the_list).Select(x => x as Ghost).ToList();
 
             foreach (Ghost ghost in encountered_ghosts)
             {
@@ -483,6 +491,7 @@ namespace Pacman
             CurrentTarget = UpdateTarget();
             FixPosition();
             TryToRecover();
+            TryToSpookPlayer();
 
             float dist_up = (float)Math.Sqrt(Math.Pow(PosX - CurrentTarget.X, 2) + Math.Pow(PosY - move_speed - CurrentTarget.Y, 2));
             float dist_down = (float)Math.Sqrt(Math.Pow(PosX - CurrentTarget.X, 2) + Math.Pow(PosY + move_speed - CurrentTarget.Y, 2));
@@ -617,7 +626,7 @@ namespace Pacman
         {
             List<Tile> recovery_points = TileManager.GetTileList().Where(x => x.IsRecoveryPoint).ToList();
 
-            if (Logic.FindOverlapsFromList(this, recovery_points.Select(x => x as GameObject)).Count > 0)
+            if (Logic.FindOverlapsFromList(this, recovery_points.Select(x => x as GameObject)).Count > 0 && Eaten)
             {
                 Recover();
             }
@@ -629,6 +638,26 @@ namespace Pacman
             Rested = true;
             Sprite = SpriteList[0];
             move_speed = normal_speed;
+        }
+
+        public void TryToSpookPlayer()
+        {
+            if ((EntityManager.ghost_state == EntityManager.GhostState.frightened && !Rested) || Eaten)
+            {
+                return;
+            }
+
+            int p_pos_x = (EntityManager.player.PosX + Pacman.tile_size/2);
+            int p_pos_y = (EntityManager.player.PosY + Pacman.tile_size/2);
+            Vector2 player_center = new Vector2(p_pos_x, p_pos_y);
+
+            Vector2 ghost_tl = new Vector2(PosX, PosY);
+            Vector2 ghost_br = new Vector2(PosX + Pacman.tile_size, PosY + Pacman.tile_size);
+
+            if (Logic.DoObjectsOverlap(player_center, ghost_tl, player_center, ghost_br))
+            {
+                Pacman.defeat = true;
+            }
         }
     }
 
