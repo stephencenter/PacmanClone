@@ -1,12 +1,19 @@
-// These three lines
-// are where the HUD goes
-// do not remove them
- XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// X = Blue wall
+// _ = Grey floor
+// . = Grey floor with small pellet
+// * = Grey floor with power pellet
+// % = Grey floor with ghost resting spot
+// A, B, C, D, E, F = Warp to the matching letter
+// Anything else = Black wall
+
+
+
+ XXXXXXXXXXXXXXXXXXXXXXXXXXXX  
  X............XX............X
- X.XXXX.XXXXX.XX.XXXXX.XXXX.X
+ X.XXXX.XXXXX.XX.XXXXX.XXXX.X         
  X*XXXX.XXXXX.XX.XXXXX.XXXX*X
  X.XXXX.XXXXX.XX.XXXXX.XXXX.X
- X..........................X
+ X..........................X   
  X.XXXX.XX.XXXXXXXX.XX.XXXX.X
  X.XXXX.XX.XXXXXXXX.XX.XXXX.X
  X......XX....XX....XX......X
@@ -32,5 +39,5 @@ A______.___X      X___.______A
  X.XXXXXXXXXX.XX.XXXXXXXXXX.X
  X..........................X
  XXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// These two lines
-// Are also for the HUD
+ 
+ 

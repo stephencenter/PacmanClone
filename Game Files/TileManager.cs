@@ -41,6 +41,11 @@ namespace Pacman
 
             foreach (string line in text_map)
             {
+                if (line.StartsWith("//"))
+                {
+                    continue;
+                }
+
                 foreach (char symbol in string.Concat(line, new string(' ', Math.Max(0, Pacman.screen_width + 2 - line.Length))))
                 {
                     if (symbol == 'X')
