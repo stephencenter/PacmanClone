@@ -12,7 +12,7 @@ namespace Pacman
     {
         private static readonly List<Tile> tile_list = new List<Tile>();
         private static readonly List<Item> item_list = new List<Item>();
-
+        
         public static List<Tile> GetTileList()
         {
             return tile_list;
@@ -45,34 +45,39 @@ namespace Pacman
                 {
                     if (symbol == 'X')
                     {
-                        tile_list.Add(new Tile(x, y, "Sprites/nontraversable_blue", false, content));
+                        tile_list.Add(new Tile(x, y, "Sprites/nontraversable_blue", false, false, content));
                     }
 
                     else if (symbol == '_')
                     {
-                        tile_list.Add(new Tile(x, y, "Sprites/traversable", true, content));
+                        tile_list.Add(new Tile(x, y, "Sprites/traversable", true, false, content));
                     }
 
                     else if (symbol == '.')
                     {
-                        tile_list.Add(new Tile(x, y, "Sprites/traversable", true, content));
+                        tile_list.Add(new Tile(x, y, "Sprites/traversable", true, false, content));
                         item_list.Add(new SmallPellet(x, y, "Sprites/small_pellet", content));
                     }
 
                     else if (symbol == '*')
                     {
-                        tile_list.Add(new Tile(x, y, "Sprites/traversable", true, content));
+                        tile_list.Add(new Tile(x, y, "Sprites/traversable", true, false, content));
                         item_list.Add(new PowerPellet(x, y, "Sprites/power_pellet", content));
+                    }
+                    
+                    else if (symbol == '%')
+                    {
+                        tile_list.Add(new Tile(x, y, "Sprites/traversable", true, true, content));
                     }
 
                     else if (new List<char>() { 'A', 'B', 'C', 'D', 'E', 'F' }.Contains(symbol))
                     {
-                        tile_list.Add(new Warp(x, y, symbol, "Sprites/traversable_black", true, content));
+                        tile_list.Add(new Warp(x, y, symbol, "Sprites/traversable_black", true, false, content));
                     }
 
                     else
                     {
-                        tile_list.Add(new Tile(x, y, "Sprites/nontraversable_black", false, content));
+                        tile_list.Add(new Tile(x, y, "Sprites/nontraversable_black", false, false, content));
                     }
 
                     x += Pacman.tile_size;
@@ -84,19 +89,18 @@ namespace Pacman
         }
     }
 
-    public class Tile
+    public class Tile : GameObject
     {
-        public int PosX;
-        public int PosY;
-        public Texture2D Sprite;
         public bool Traversable;
+        public bool IsRecoveryPoint;
 
-        public Tile(int pos_x, int pos_y, string sprite, bool traversable, ContentManager content)
+        public Tile(int pos_x, int pos_y, string sprite, bool traversable, bool recovery, ContentManager content)
         {
             PosX = pos_x;
             PosY = pos_y;
             Sprite = content.Load<Texture2D>(sprite);
             Traversable = traversable;
+            IsRecoveryPoint = recovery;
         }
     }
 
@@ -104,18 +108,14 @@ namespace Pacman
     {
         public char Symbol;
 
-        public Warp(int pos_x, int pos_y, char symbol, string sprite, bool traversable, ContentManager content) : base(pos_x, pos_y, sprite, traversable, content)
+        public Warp(int pos_x, int pos_y, char symbol, string sprite, bool traversable, bool recovery, ContentManager content) : base(pos_x, pos_y, sprite, traversable, recovery, content)
         {
             Symbol = symbol;
         }
     }
 
-    public abstract class Item
+    public abstract class Item : GameObject
     {
-        public int PosX;
-        public int PosY;
-        public Texture2D Sprite;
-
         public Item(int pos_x, int pos_y, string sprite, ContentManager content)
         {
             PosX = pos_x;
@@ -144,8 +144,7 @@ namespace Pacman
         public override void UponEating()
         {
             TileManager.GetItemList().Remove(this);
-            EntityManager.state_timer = 0;
-            EntityManager.ghost_state = EntityManager.GhostState.frightened;
+            EntityManager.BeginFrightenedState();
         }
     }
 }

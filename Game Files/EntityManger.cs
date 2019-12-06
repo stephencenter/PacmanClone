@@ -17,6 +17,8 @@ namespace Pacman
         public static Inky inky;
         public static Clyde clyde;
 
+        public static Vector2 jail_point = new Vector2(13 * Pacman.tile_size, 14 * Pacman.tile_size);
+
         public static GhostState ghost_state;
         public static float state_timer;
         private static float previous_timer;
@@ -38,52 +40,72 @@ namespace Pacman
             return new List<Entity>() { player, blinky, pinky, inky, clyde };
         }
 
+        public static List<Ghost> GetGhostList()
+        {
+            return new List<Ghost>() { blinky, pinky, inky, clyde };
+        }
+
         public static void CreateEntities(ContentManager content)
         {
-            player = new Player(content.Load<Texture2D>("Sprites/player"), new Vector2((int)(13.6 * Pacman.tile_size), 26 * Pacman.tile_size));
+            player = new Player(new Vector2((int)(13 * Pacman.tile_size), 26 * Pacman.tile_size))
+            {
+                Sprite = content.Load<Texture2D>("Sprites/player")
+            };
 
-            blinky = new Blinky(content.Load<Texture2D>("Sprites/blinky"), new Vector2(26 * Pacman.tile_size, 4 * Pacman.tile_size), content.Load<Texture2D>("Sprites/blinky_target"));
+            blinky = new Blinky(new Vector2(26 * Pacman.tile_size, 4 * Pacman.tile_size))
+            {
+                SpriteList = new List<Texture2D>()
+                {
+                    content.Load<Texture2D>("Sprites/blinky"),
+                    content.Load<Texture2D>("Sprites/frightened_ghost"),
+                    content.Load<Texture2D>("Sprites/eaten_ghost"),
+                    content.Load<Texture2D>("Sprites/blinky_target")
+                }
+            };
 
-            pinky = new Pinky(content.Load<Texture2D>("Sprites/pinky"), new Vector2(1 * Pacman.tile_size, 4 * Pacman.tile_size), content.Load<Texture2D>("Sprites/pinky_target"));
+            pinky = new Pinky(new Vector2(1 * Pacman.tile_size, 4 * Pacman.tile_size))
+            {
+                SpriteList = new List<Texture2D>()
+                {
+                    content.Load<Texture2D>("Sprites/pinky"),
+                    content.Load<Texture2D>("Sprites/frightened_ghost"),
+                    content.Load<Texture2D>("Sprites/eaten_ghost"),
+                    content.Load<Texture2D>("Sprites/pinky_target")
+                }
+            };
 
-            inky = new Inky(content.Load<Texture2D>("Sprites/inky"), new Vector2(26 * Pacman.tile_size, 32 * Pacman.tile_size), content.Load<Texture2D>("Sprites/inky_target"));
+            inky = new Inky(new Vector2(26 * Pacman.tile_size, 32 * Pacman.tile_size))
+            {
+                SpriteList = new List<Texture2D>()
+                {
+                    content.Load<Texture2D>("Sprites/inky"),
+                    content.Load<Texture2D>("Sprites/frightened_ghost"),
+                    content.Load<Texture2D>("Sprites/eaten_ghost"),
+                    content.Load<Texture2D>("Sprites/inky_target")
+                }
+            };
 
-            clyde = new Clyde(content.Load<Texture2D>("Sprites/clyde"), new Vector2(1 * Pacman.tile_size, 32 * Pacman.tile_size), content.Load<Texture2D>("Sprites/clyde_target"));
+            clyde = new Clyde(new Vector2(1 * Pacman.tile_size, 32 * Pacman.tile_size))
+            {
+                SpriteList = new List<Texture2D>()
+                {
+                    content.Load<Texture2D>("Sprites/clyde"),
+                    content.Load<Texture2D>("Sprites/frightened_ghost"),
+                    content.Load<Texture2D>("Sprites/eaten_ghost"),
+                    content.Load<Texture2D>("Sprites/clyde_target")
+                }
+            };
 
             foreach (Entity entity in GetEntityList())
             {
                 entity.PosX = (int)entity.HomePoint.X;
                 entity.PosY = (int)entity.HomePoint.Y;
-            }
-        }
-
-        public static List<Tile> GetCurrentTiles(float pos_x, float pos_y)
-        {
-            Vector2 e_top_left = new Vector2(pos_x, pos_y);
-            Vector2 e_bot_right = new Vector2(pos_x + Pacman.entity_size, pos_y + Pacman.entity_size);
-
-            List<Tile> current_tiles = new List<Tile>();
-            foreach (Tile tile in TileManager.GetTileList())
-            {
-
-                Vector2 t_top_left = new Vector2(tile.PosX, tile.PosY);
-                Vector2 t_bot_right = new Vector2(tile.PosX + Pacman.tile_size, tile.PosY + Pacman.tile_size);
-
-                foreach (Vector2 point in new List<Vector2>() { e_top_left, e_bot_right })
+                if (entity is Ghost ghost)
                 {
-                    if (DoObjectsOverlap(e_top_left, t_top_left, e_bot_right, t_bot_right))
-                    {
-                        current_tiles.Add(tile);
-                    }
+                    ghost.Sprite = ghost.SpriteList[0];
+                    ghost.TargetSprite = ghost.SpriteList[3];
                 }
             }
-
-            return current_tiles;
-        }
-
-        public static bool DoObjectsOverlap(Vector2 tl1, Vector2 tl2, Vector2 br1, Vector2 br2)
-        {
-            return tl1.X < br2.X && tl2.X < br1.X && tl1.Y < br2.Y && tl2.Y < br1.Y;
         }
 
         public static Vector2 FindPointInFrontOfEntity(Entity entity, int num_tiles)
@@ -125,19 +147,16 @@ namespace Pacman
                 suspended_timer = state_timer;
             }
                 
-            if (ghost_state == GhostState.frightened && state_timer >= 8)
+            if (ghost_state == GhostState.frightened && state_timer >= 7)
             {
                 ghost_state = suspended_state;
                 state_timer = suspended_timer;
+                EndFrightenedState();
             }
 
             if (ghost_state == GhostState.scatter && state_timer >= 7)
             {
-                foreach (Ghost ghost in GetEntityList().Where(x => x is Ghost))
-                {
-                    ghost.FacingDirection = Pacman.OppositeDir[ghost.FacingDirection];
-                }
-
+                TurnaroundAllGhosts();
                 ghost_state = GhostState.chase;
                 suspended_state = GhostState.chase;
                 state_timer = 0;
@@ -145,47 +164,72 @@ namespace Pacman
 
             if (ghost_state == GhostState.chase && state_timer >= 20)
             {
-                foreach (Ghost ghost in GetEntityList().Where(x => x is Ghost))
-                {
-                    ghost.FacingDirection = Pacman.OppositeDir[ghost.FacingDirection];
-                }
-
+                TurnaroundAllGhosts();
                 ghost_state = GhostState.scatter;
                 suspended_state = GhostState.scatter;
                 state_timer = 0;
             }
         }
+
+        public static void TurnaroundAllGhosts()
+        {
+            foreach (Ghost ghost in GetGhostList())
+            {
+                ghost.FacingDirection = Pacman.OppositeDir[ghost.FacingDirection];
+            }
+        }
+
+        public static void BeginFrightenedState()
+        {
+            state_timer = 0;
+            ghost_state = GhostState.frightened;
+            TurnaroundAllGhosts();
+
+            foreach (Ghost ghost in GetGhostList().Where(x => !x.Eaten))
+            {
+                ghost.move_speed = Ghost.frightened_speed;
+                ghost.Sprite = ghost.SpriteList[1];
+                ghost.Rested = false;
+            }
+        }
+
+        public static void EndFrightenedState()
+        {
+            foreach (Ghost ghost in GetGhostList().Where(x => !x.Eaten))
+            {
+                ghost.move_speed = Ghost.normal_speed;
+                ghost.Sprite = ghost.SpriteList[0];
+                ghost.Rested = false;
+            }
+        }
     }
 
-    public abstract class Entity
+    public abstract class Entity : GameObject
     {
-        public int PosX { get; set; }
-        public int PosY { get; set; }
-        public Texture2D Sprite { get; set; }
         public Pacman.Direction FacingDirection { get; set; }
         public Vector2 HomePoint { get; set; }
+        public int move_speed = 2;
 
-        public Entity(Texture2D sprite, Vector2 home_point)
+        public Entity(Vector2 home_point)
         {
-            Sprite = sprite;
             HomePoint = home_point;
         }
 
         public abstract void Move();
 
-        public bool PredictCollision(float x_delta, float y_delta)
+        public bool PredictCollision(int x_delta, int y_delta)
         {
-            return EntityManager.GetCurrentTiles(PosX + x_delta, PosY + y_delta).Any(x => !x.Traversable);
+            return GetCurrentTiles(PosX + x_delta, PosY + y_delta).Any(x => !x.Traversable);
         }
 
         public bool IsWithinWarp()
         {
-            return EntityManager.GetCurrentTiles(PosX, PosY).Any(x => x is Warp);
+            return GetCurrentTiles().Any(x => x is Warp);
         }
 
         public void WarpEntity()
         {
-            Warp the_warp = EntityManager.GetCurrentTiles(PosX, PosY).First(x => x is Warp) as Warp;
+            Warp the_warp = GetCurrentTiles(PosX, PosY).First(x => x is Warp) as Warp;
             Warp matching_warp = TileManager.FindMatchingWarp(the_warp);
 
             if (FacingDirection == Pacman.Direction.up)
@@ -212,6 +256,43 @@ namespace Pacman
                 PosY = matching_warp.PosY;
             }
         }
+
+        public void FixPosition()
+        {
+            // This fixes any problems that would have occured from changing move-speeds mid-game
+            int x_remainder = PosX % move_speed;
+            int y_remainder = PosY % move_speed;
+
+            if (PredictCollision(x_remainder, 0))
+            {
+                PosX -= x_remainder;
+            }
+
+            else
+            {
+                PosX += x_remainder;
+            }
+
+            if (PredictCollision(y_remainder, 0))
+            {
+                PosY -= y_remainder;
+            }
+
+            else
+            {
+                PosY += y_remainder;
+            }
+        }
+
+        public List<Tile> GetCurrentTiles()
+        {
+            return Logic.FindOverlapsFromList(this, TileManager.GetTileList().Select(x => x as GameObject)).Select(x => x as Tile).ToList();
+        }
+
+        public List<Tile> GetCurrentTiles(int pos_x, int pos_y)
+        {
+            return Logic.FindOverlapsFromList(pos_x, pos_y, TileManager.GetTileList().Select(x => x as GameObject)).Select(x => x as Tile).ToList();
+        }
     }
 
     public sealed class Player : Entity
@@ -219,18 +300,16 @@ namespace Pacman
         public Pacman.Button? CurrentAction { get; set; }
         public Pacman.Button? QueuedAction { get; set; }
 
-        public Player(Texture2D sprite, Vector2 home_point) : base(sprite, home_point) { }
+        public Player(Vector2 home_point) : base(home_point) { }
 
         public override void Move()
         {
-            const int delta_move = 1;
-
-            EatThings();
+            FixPosition();
 
             // Get keyboard input to determine current and queued actions
             if (Logic.IsButtonPressed(Pacman.Button.move_up))
             {
-                if ((CurrentAction == Pacman.Button.move_left || CurrentAction == Pacman.Button.move_right) && PredictCollision(0, -delta_move))
+                if ((CurrentAction == Pacman.Button.move_left || CurrentAction == Pacman.Button.move_right) && PredictCollision(0, -move_speed))
                 {
                     QueuedAction = Pacman.Button.move_up;
                 }
@@ -243,7 +322,7 @@ namespace Pacman
 
             else if (Logic.IsButtonPressed(Pacman.Button.move_down))
             {
-                if ((CurrentAction == Pacman.Button.move_left || CurrentAction == Pacman.Button.move_right) && PredictCollision(0, delta_move))
+                if ((CurrentAction == Pacman.Button.move_left || CurrentAction == Pacman.Button.move_right) && PredictCollision(0, move_speed))
                 {
                     QueuedAction = Pacman.Button.move_down;
                 }
@@ -256,7 +335,7 @@ namespace Pacman
 
             else if (Logic.IsButtonPressed(Pacman.Button.move_left))
             {
-                if ((CurrentAction == Pacman.Button.move_up || CurrentAction == Pacman.Button.move_down) && PredictCollision(-delta_move, 0))
+                if ((CurrentAction == Pacman.Button.move_up || CurrentAction == Pacman.Button.move_down) && PredictCollision(-move_speed, 0))
                 {
                     QueuedAction = Pacman.Button.move_left;
                 }
@@ -269,7 +348,7 @@ namespace Pacman
 
             else if (Logic.IsButtonPressed(Pacman.Button.move_right))
             {
-                if ((CurrentAction == Pacman.Button.move_up || CurrentAction == Pacman.Button.move_down) && PredictCollision(delta_move, 0))
+                if ((CurrentAction == Pacman.Button.move_up || CurrentAction == Pacman.Button.move_down) && PredictCollision(move_speed, 0))
                 {
                     QueuedAction = Pacman.Button.move_right;
                 }
@@ -281,11 +360,11 @@ namespace Pacman
             }
 
             // Execute the current and queued actions
-            if (CurrentAction == Pacman.Button.move_up || (QueuedAction == Pacman.Button.move_up && !PredictCollision(0, -delta_move)))
+            if (CurrentAction == Pacman.Button.move_up || (QueuedAction == Pacman.Button.move_up && !PredictCollision(0, -move_speed)))
             {
-                if (!PredictCollision(0, -delta_move))
+                if (!PredictCollision(0, -move_speed))
                 {
-                    PosY -= delta_move;
+                    PosY -= move_speed;
                     FacingDirection = Pacman.Direction.up;
 
                     if (QueuedAction == Pacman.Button.move_up)
@@ -296,11 +375,11 @@ namespace Pacman
                 }
             }
 
-            if (CurrentAction == Pacman.Button.move_down || (QueuedAction == Pacman.Button.move_down && !PredictCollision(0, delta_move)))
+            if (CurrentAction == Pacman.Button.move_down || (QueuedAction == Pacman.Button.move_down && !PredictCollision(0, move_speed)))
             {
-                if (!PredictCollision(0, delta_move))
+                if (!PredictCollision(0, move_speed))
                 {
-                    PosY += delta_move;
+                    PosY += move_speed;
                     FacingDirection = Pacman.Direction.down;
 
                     if (QueuedAction == Pacman.Button.move_down)
@@ -311,11 +390,11 @@ namespace Pacman
                 }
             }
 
-            if (CurrentAction == Pacman.Button.move_left || (QueuedAction == Pacman.Button.move_left && !PredictCollision(-delta_move, 0)))
+            if (CurrentAction == Pacman.Button.move_left || (QueuedAction == Pacman.Button.move_left && !PredictCollision(-move_speed, 0)))
             {
-                if (!PredictCollision(-delta_move, 0))
+                if (!PredictCollision(-move_speed, 0))
                 {
-                    PosX -= delta_move;
+                    PosX -= move_speed;
                     FacingDirection = Pacman.Direction.left;
 
                     if (QueuedAction == Pacman.Button.move_left)
@@ -326,11 +405,11 @@ namespace Pacman
                 }
             }
 
-            if (CurrentAction == Pacman.Button.move_right || (QueuedAction == Pacman.Button.move_right && !PredictCollision(delta_move, 0)))
+            if (CurrentAction == Pacman.Button.move_right || (QueuedAction == Pacman.Button.move_right && !PredictCollision(move_speed, 0)))
             {
-                if (!PredictCollision(delta_move, 0))
+                if (!PredictCollision(move_speed, 0))
                 {
-                    PosX += delta_move;
+                    PosX += move_speed;
                     FacingDirection = Pacman.Direction.right;
 
                     if (QueuedAction == Pacman.Button.move_right)
@@ -341,6 +420,8 @@ namespace Pacman
                 }
             }
 
+            EatThings();
+            EncounterGhost();
             if (IsWithinWarp())
             {
                 WarpEntity();
@@ -349,24 +430,37 @@ namespace Pacman
 
         public void EatThings()
         {
-            List<Item> to_be_eaten = new List<Item>();
-
-            Vector2 p_topleft = new Vector2(PosX, PosY);
-            Vector2 p_botright = new Vector2(PosX + Pacman.tile_size, PosY + Pacman.tile_size);
-            foreach (Item item in TileManager.GetItemList())
-            {
-                Vector2 i_topleft = new Vector2(item.PosX, item.PosY);
-                Vector2 i_botright = new Vector2(item.PosX + Pacman.tile_size, item.PosY + Pacman.tile_size);
-
-                if (EntityManager.DoObjectsOverlap(p_topleft, i_topleft, p_botright, i_botright))
-                {
-                    to_be_eaten.Add(item);
-                }
-            }
+            List<Item> to_be_eaten = Logic.FindOverlapsFromList(this, TileManager.GetItemList().Select(x => x as GameObject)).Select(x => x as Item).ToList();
 
             foreach (Item item in to_be_eaten)
             {
                 item.UponEating();
+            }
+        }
+
+        public void EncounterGhost()
+        {
+            List<Ghost> encountered_ghosts = Logic.FindOverlapsFromList(this, EntityManager.GetGhostList().Select(x => x as GameObject)).Select(x => x as Ghost).ToList();
+
+            foreach (Ghost ghost in encountered_ghosts)
+            {
+                // Nothing happens if you run into a ghost while its running back to rest
+                if (ghost.Eaten && !ghost.Rested)
+                {
+
+                }
+
+                // If you encounter a ghost while it's frightened, it will get eaten and run back to rest
+                else if (EntityManager.ghost_state == EntityManager.GhostState.frightened && !ghost.Rested)
+                {
+                    ghost.GetEaten();
+                }
+
+                // Otherwise, the ghost will kill you
+                else
+                {
+
+                }
             }
         }
     }
@@ -375,21 +469,25 @@ namespace Pacman
     {
         public Texture2D TargetSprite { get; set; }
         public Vector2 CurrentTarget { get; set; }
+        public List<Texture2D> SpriteList { get; set; }
+        public bool Eaten = false;
+        public bool Rested = false;
+        public const int normal_speed = 2;
+        public const int frightened_speed = 1;
+        public const int eaten_speed = 4;
 
-        public Ghost(Texture2D sprite, Vector2 home_point, Texture2D t_sprite) : base(sprite, home_point)
-        {
-            TargetSprite = t_sprite;
-        }
+        public Ghost(Vector2 home_point) : base(home_point) { }
 
         public override void Move()
         {
             CurrentTarget = UpdateTarget();
-            const int delta_move = 1;
+            FixPosition();
+            TryToRecover();
 
-            float dist_up = (float)Math.Sqrt(Math.Pow(PosX - CurrentTarget.X, 2) + Math.Pow(PosY - delta_move - CurrentTarget.Y, 2));
-            float dist_down = (float)Math.Sqrt(Math.Pow(PosX - CurrentTarget.X, 2) + Math.Pow(PosY + delta_move - CurrentTarget.Y, 2));
-            float dist_left = (float)Math.Sqrt(Math.Pow(PosX - delta_move - CurrentTarget.X, 2) + Math.Pow(PosY - CurrentTarget.Y, 2));
-            float dist_right = (float)Math.Sqrt(Math.Pow(PosX + delta_move - CurrentTarget.X, 2) + Math.Pow(PosY - CurrentTarget.Y, 2));
+            float dist_up = (float)Math.Sqrt(Math.Pow(PosX - CurrentTarget.X, 2) + Math.Pow(PosY - move_speed - CurrentTarget.Y, 2));
+            float dist_down = (float)Math.Sqrt(Math.Pow(PosX - CurrentTarget.X, 2) + Math.Pow(PosY + move_speed - CurrentTarget.Y, 2));
+            float dist_left = (float)Math.Sqrt(Math.Pow(PosX - move_speed - CurrentTarget.X, 2) + Math.Pow(PosY - CurrentTarget.Y, 2));
+            float dist_right = (float)Math.Sqrt(Math.Pow(PosX + move_speed - CurrentTarget.X, 2) + Math.Pow(PosY - CurrentTarget.Y, 2));
 
             Dictionary<Pacman.Direction, float> distances = new Dictionary<Pacman.Direction, float>() 
             {
@@ -404,52 +502,52 @@ namespace Pacman
             {
                 if (distances.Values.Min() == dist_up && distances.Keys.Contains(Pacman.Direction.up))
                 {
-                    if (PredictCollision(0, -delta_move))
+                    if (PredictCollision(0, -move_speed))
                     {
                         distances.Remove(Pacman.Direction.up);
                         continue;
                     }
 
-                    PosY -= delta_move;
+                    PosY -= move_speed;
                     FacingDirection = Pacman.Direction.up;
                     break;
                 }
 
                 if (distances.Values.Min() == dist_down && distances.Keys.Contains(Pacman.Direction.down))
                 {
-                    if (PredictCollision(0, delta_move))
+                    if (PredictCollision(0, move_speed))
                     {
                         distances.Remove(Pacman.Direction.down);
                         continue;
                     }
 
-                    PosY += delta_move;
+                    PosY += move_speed;
                     FacingDirection = Pacman.Direction.down;
                     break;
                 }
 
                 if (distances.Values.Min() == dist_left && distances.Keys.Contains(Pacman.Direction.left))
                 {
-                    if (PredictCollision(-delta_move, 0))
+                    if (PredictCollision(-move_speed, 0))
                     {
                         distances.Remove(Pacman.Direction.left);
                         continue;
                     }
 
-                    PosX -= delta_move;
+                    PosX -= move_speed;
                     FacingDirection = Pacman.Direction.left;
                     break;
                 }
 
                 if (distances.Values.Min() == dist_right && distances.Keys.Contains(Pacman.Direction.right))
                 {
-                    if (PredictCollision(delta_move, 0))
+                    if (PredictCollision(move_speed, 0))
                     {
                         distances.Remove(Pacman.Direction.right);
                         continue;
                     }
 
-                    PosX += delta_move;
+                    PosX += move_speed;
                     FacingDirection = Pacman.Direction.right;
                     break;
                 }
@@ -460,55 +558,104 @@ namespace Pacman
                 WarpEntity();
             }
         }
+        
+        public Vector2 UpdateTarget()
+        {
+            // Eaten mode
+            if (Eaten)
+            {
+                return EntityManager.jail_point;
+            }
 
-        public abstract Vector2 UpdateTarget();
+            // Scatter mode
+            if (EntityManager.ghost_state == EntityManager.GhostState.scatter)
+            {
+                return HomePoint;
+            }
+
+            // Frightened mode
+            else if (EntityManager.ghost_state == EntityManager.GhostState.frightened && !Rested)
+            {
+                return PickRandomAdjacentPoint();
+            }
+
+            // Chase mode
+            return GetChaseTarget();
+        }
+
+        public abstract Vector2 GetChaseTarget();
+
+        public Vector2 PickRandomAdjacentPoint()
+        {
+            Random rng = new Random();
+
+            Vector2 point_up = new Vector2(PosX , PosY - Pacman.tile_size);
+            Vector2 point_down = new Vector2(PosX, PosY + Pacman.tile_size);
+            Vector2 point_left = new Vector2(PosX - Pacman.tile_size, PosY);
+            Vector2 point_right = new Vector2(PosX + Pacman.tile_size, PosY);
+
+            Dictionary<Pacman.Direction, Vector2> point_list = new Dictionary<Pacman.Direction, Vector2>()
+            {
+                { Pacman.Direction.up, point_up },
+                { Pacman.Direction.down, point_down },
+                { Pacman.Direction.left, point_left },
+                { Pacman.Direction.right, point_right }
+            };
+
+            point_list.Remove(Pacman.OppositeDir[FacingDirection]);
+            return point_list.ToList()[rng.Next(point_list.Count())].Value;
+        }
+
+        public void GetEaten()
+        {
+            Eaten = true;
+            Sprite = SpriteList[2];
+            move_speed = eaten_speed;
+        }
+
+        public void TryToRecover()
+        {
+            List<Tile> recovery_points = TileManager.GetTileList().Where(x => x.IsRecoveryPoint).ToList();
+
+            if (Logic.FindOverlapsFromList(this, recovery_points.Select(x => x as GameObject)).Count > 0)
+            {
+                Recover();
+            }
+        }
+
+        public void Recover()
+        {
+            Eaten = false;
+            Rested = true;
+            Sprite = SpriteList[0];
+            move_speed = normal_speed;
+        }
     }
 
     public sealed class Blinky : Ghost
     {
-        public override Vector2 UpdateTarget()
+        public override Vector2 GetChaseTarget()
         {
-            // Scatter state
-            if (EntityManager.ghost_state == EntityManager.GhostState.scatter)
-            {
-                return HomePoint;
-            }
-
-            // Chase state
             return new Vector2(EntityManager.player.PosX, EntityManager.player.PosY);
         }
 
-        public Blinky(Texture2D sprite, Vector2 home_point, Texture2D t_sprite) : base(sprite, home_point, t_sprite) { }
+        public Blinky(Vector2 home_point) : base(home_point) { }
     }
 
     public sealed class Pinky : Ghost
     {
-        public override Vector2 UpdateTarget()
+        public override Vector2 GetChaseTarget()
         {
-            // Scatter state
-            if (EntityManager.ghost_state == EntityManager.GhostState.scatter)
-            {
-                return HomePoint;
-            }
-
-            // Chase state
             return EntityManager.FindPointInFrontOfEntity(EntityManager.player, 4);
         }
 
-        public Pinky(Texture2D sprite, Vector2 home_point, Texture2D t_sprite) : base(sprite, home_point, t_sprite) { }
+        public Pinky(Vector2 home_point) : base(home_point) { }
     }
 
     public sealed class Inky : Ghost
     {
-        public override Vector2 UpdateTarget()
+        public override Vector2 GetChaseTarget()
         {
-            // Scatter state
-            if (EntityManager.ghost_state == EntityManager.GhostState.scatter)
-            {
-                return HomePoint;
-            }
-
-            // Chase state
             Vector2 mid_point = EntityManager.FindPointInFrontOfEntity(EntityManager.player, 2);
             Vector2 blinky_point = new Vector2(EntityManager.blinky.PosX, EntityManager.blinky.PosY);
 
@@ -518,20 +665,13 @@ namespace Pacman
             return new Vector2(mid_point.X - run, mid_point.Y - rise);
         }
 
-        public Inky(Texture2D sprite, Vector2 home_point, Texture2D t_sprite) : base(sprite, home_point, t_sprite) { }
+        public Inky(Vector2 home_point) : base(home_point) { }
     }
 
     public sealed class Clyde : Ghost
     {
-        public override Vector2 UpdateTarget()
+        public override Vector2 GetChaseTarget()
         {
-            // Scatter state
-            if (EntityManager.ghost_state == EntityManager.GhostState.scatter)
-            {
-                return HomePoint;
-            }
-
-            // Chase state
             Vector2 player_point = new Vector2(EntityManager.player.PosX, EntityManager.player.PosY);
             float current_distance = (float)Math.Sqrt(Math.Pow(PosY - player_point.Y, 2) + Math.Pow(PosX - player_point.X, 2));
 
@@ -543,6 +683,6 @@ namespace Pacman
             return HomePoint;
         }
 
-        public Clyde(Texture2D sprite, Vector2 home_point, Texture2D t_sprite) : base(sprite, home_point, t_sprite) { }
+        public Clyde(Vector2 home_point) : base(home_point) { }
     }
 }

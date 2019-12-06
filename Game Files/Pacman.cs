@@ -13,11 +13,11 @@ namespace Pacman
     {
         private readonly GraphicsDeviceManager graphics;
         private SpriteBatch spriteBatch;
-        public const int entity_size = 8;
-        public const int tile_size = 8;
+        public const int entity_size = 16;
+        public const int tile_size = 16;
         public const int screen_width = 28;
         public const int screen_height = 36;
-        public static float scaling_factor = 3.25f;
+        public static float scaling_factor = 1.75f;
         public static int collected_pellets = 0;
 
         // List of valid actions, these can have multiple keys assigned to them
@@ -138,6 +138,13 @@ namespace Pacman
         }
     }
 
+    public class GameObject
+    {
+        public int PosX;
+        public int PosY;
+        public Texture2D Sprite;
+    }
+
     public static class Logic
     {
         // Check to see if a specific button is pressed
@@ -163,6 +170,57 @@ namespace Pacman
             }
 
             return "error";
+        }
+
+        public static List<GameObject> FindOverlapsFromList(Entity entity, IEnumerable<GameObject> the_list)
+        {
+            Vector2 a_top_left = new Vector2(entity.PosX, entity.PosY);
+            Vector2 a_bot_right = new Vector2(entity.PosX + Pacman.entity_size, entity.PosY + Pacman.entity_size);
+
+            List<GameObject> current_objects = new List<GameObject>();
+            foreach (GameObject obj in the_list)
+            {
+                Vector2 b_top_left = new Vector2(obj.PosX, obj.PosY);
+                Vector2 b_bot_right = new Vector2(obj.PosX + Pacman.tile_size, obj.PosY + Pacman.tile_size);
+
+                foreach (Vector2 point in new List<Vector2>() { a_top_left, a_bot_right })
+                {
+                    if (DoObjectsOverlap(a_top_left, b_top_left, a_bot_right, b_bot_right))
+                    {
+                        current_objects.Add(obj);
+                    }
+                }
+            }
+
+            return current_objects;
+        }
+
+        public static List<GameObject> FindOverlapsFromList(int pos_x, int pos_y, IEnumerable<GameObject> the_list)
+        {
+            Vector2 a_top_left = new Vector2(pos_x, pos_y);
+            Vector2 a_bot_right = new Vector2(pos_x + Pacman.entity_size, pos_y + Pacman.entity_size);
+
+            List<GameObject> current_objects = new List<GameObject>();
+            foreach (GameObject obj in the_list)
+            {
+                Vector2 b_top_left = new Vector2(obj.PosX, obj.PosY);
+                Vector2 b_bot_right = new Vector2(obj.PosX + Pacman.tile_size, obj.PosY + Pacman.tile_size);
+
+                foreach (Vector2 point in new List<Vector2>() { a_top_left, a_bot_right })
+                {
+                    if (DoObjectsOverlap(a_top_left, b_top_left, a_bot_right, b_bot_right))
+                    {
+                        current_objects.Add(obj);
+                    }
+                }
+            }
+
+            return current_objects;
+        }
+
+        public static bool DoObjectsOverlap(Vector2 tl1, Vector2 tl2, Vector2 br1, Vector2 br2)
+        {
+            return tl1.X < br2.X && tl2.X < br1.X && tl1.Y < br2.Y && tl2.Y < br1.Y;
         }
     }
 }
