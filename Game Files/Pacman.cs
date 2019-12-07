@@ -74,7 +74,8 @@ namespace Pacman
             base.Initialize();
             graphics.PreferredBackBufferHeight = (int)(tile_size * screen_height * scaling_factor);
             graphics.PreferredBackBufferWidth = (int)(tile_size * screen_width * scaling_factor);
-            Window.AllowUserResizing = true;
+            Window.AllowUserResizing = true; 
+            IsMouseVisible = true;
             graphics.ApplyChanges();
             TileManager.CreateGameMap(Content);
         }
@@ -111,7 +112,7 @@ namespace Pacman
             {
                 if (Logic.IsButtonPressed(Button.reset))
                 {
-                    Logic.ResetGame(Content);
+                    Logic.ResetGame(Content, game_time);
                 }
             }
 
@@ -217,12 +218,9 @@ namespace Pacman
                 Vector2 b_top_left = new Vector2(obj.PosX, obj.PosY);
                 Vector2 b_bot_right = new Vector2(obj.PosX + Pacman.tile_size, obj.PosY + Pacman.tile_size);
 
-                foreach (Vector2 point in new List<Vector2>() { a_top_left, a_bot_right })
+                if (DoObjectsOverlap(a_top_left, b_top_left, a_bot_right, b_bot_right))
                 {
-                    if (DoObjectsOverlap(a_top_left, b_top_left, a_bot_right, b_bot_right))
-                    {
-                        current_objects.Add(obj);
-                    }
+                    current_objects.Add(obj);
                 }
             }
 
@@ -280,7 +278,7 @@ namespace Pacman
             font_batch.End();
         }
 
-        public static void ResetGame(ContentManager content)
+        public static void ResetGame(ContentManager content, GameTime game_time)
         {
             TileManager.GetTileList().Clear();
             TileManager.GetItemList().Clear();
@@ -292,6 +290,7 @@ namespace Pacman
             EntityManager.ghost_state = EntityManager.GhostState.scatter;
             EntityManager.state_timer = 0;
             EntityManager.ResetValues();
+            game_time.TotalGameTime = new TimeSpan();
         }
     }
 }
